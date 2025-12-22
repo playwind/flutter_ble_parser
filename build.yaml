@@ -1,0 +1,20 @@
+targets:
+  $default:
+    builders:
+      source_gen|combining_builder:
+        options:
+          ignore_for_file:
+            - lines_longer_than_80_chars
+      ble_parser:
+        generate_for:
+          - example/*.dart
+        options: { }
+
+builders:
+  ble_parser:
+    import: "package:ble_parser/builder.dart"
+    builder_factories: [ "bleParserBuilder" ]
+    build_extensions: { ".dart": [ "ble_parser.g.part" ] }
+    auto_apply: dependents
+    build_to: cache
+    applies_builders: ["source_gen|combining_builder"]
