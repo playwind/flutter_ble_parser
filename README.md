@@ -76,6 +76,7 @@ Marks a field for BLE data parsing. Used on class fields.
 ### Step 1: Define your data model
 
 ```dart
+import 'dart:typed_data';
 import 'package:ble_parser/ble_parser.dart';
 part 'my_sensor.g.dart';  // Required part directive
 
@@ -96,7 +97,13 @@ class HeartRatePacket {
     required this.energyExpended,
   });
 
+  // Parse from List<int> (convenience method)
   static HeartRatePacket fromBytes(List<int> data) {
+    return _$HeartRatePacketFromBytesList(data);
+  }
+
+  // Parse from Uint8List (zero-copy, preferred for BLE data)
+  static HeartRatePacket fromBytesUint8(Uint8List data) {
     return _$HeartRatePacketFromBytes(data);
   }
 }
@@ -111,17 +118,39 @@ dart run build_runner build
 ### Step 3: Use the generated parser
 
 ```dart
+import 'dart:typed_data';
+
 void main() {
-  // Raw BLE data
-  final bleData = [0x06, 0x78, 0x00, 0x00, 0x05, 0x00];
+  // Using Uint8List (recommended - zero-copy, direct from BLE device)
+  final bleData = Uint8List.fromList([0x06, 0x78, 0x00, 0x00, 0x05, 0x00]);
+  final packet1 = HeartRatePacket.fromBytesUint8(bleData);
 
-  // Parse into typed object
-  final packet = HeartRatePacket.fromBytes(bleData);
+  // Using List<int> (convenience - automatic conversion)
+  final listData = [0x06, 0x78, 0x00, 0x00, 0x05, 0x00];
+  final packet2 = HeartRatePacket.fromBytes(listData);
 
-  print('Heart Rate: ${packet.heartRateValue} BPM');
-  print('Energy: ${packet.energyExpended}');
+  print('Heart Rate: ${packet1.heartRateValue} BPM');
+  print('Energy: ${packet1.energyExpended}');
 }
 ```
+
+## Input Type Support
+
+The library supports two input types for parsing:
+
+### Uint8List (Recommended)
+- **Zero-copy parsing** - Directly views the data without copying
+- **Best for BLE devices** - Flutter BLE plugins return `Uint8List`
+- **Better performance** - No unnecessary memory allocation
+- **Factory method**: `fromBytesUint8(Uint8List data)`
+
+### List<int> (Convenience)
+- **Automatic conversion** - Internally converts to `Uint8List`
+- **Easy to use** - Works with any `List<int>` data
+- **Better compatibility** - Useful when you already have `List<int>`
+- **Factory method**: `fromBytes(List<int> data)`
+
+**Note:** Both methods produce identical results. Choose `Uint8List` for best performance or `List<int>` for convenience.
 
 ## Usage Examples
 
@@ -320,12 +349,23 @@ class CustomData {
 
 ## Generated Code
 
-The builder generates a `_<ClassName>FromBytes` function that you can use to parse raw BLE data.
+The builder generates two parsing functions for each annotated class:
 
-**Example generated code:**
-
+### 1. Uint8List Version (Primary - Zero-Copy)
 ```dart
-HeartRatePacket _$HeartRatePacketFromBytes(List<int> rawData) {
+HeartRatePacket _$HeartRatePacketFromBytes(Uint8List rawData) {
+  final view = ByteData.sublistView(rawData);
+  return HeartRatePacket(
+    flags: view.getUint8(0),
+    heartRateValue: view.getUint16(1, Endian.little),
+    energyExpended: view.getUint16(4, Endian.little)
+  );
+}
+```
+
+### 2. List<int> Version (Compatibility Wrapper)
+```dart
+HeartRatePacket _$HeartRatePacketFromBytesList(List<int> rawData) {
   final view = ByteData.sublistView(Uint8List.fromList(rawData));
   return HeartRatePacket(
     flags: view.getUint8(0),
@@ -334,6 +374,8 @@ HeartRatePacket _$HeartRatePacketFromBytes(List<int> rawData) {
   );
 }
 ```
+
+**Key Difference:** The Uint8List version uses `ByteData.sublistView(rawData)` for zero-copy viewing, while the List<int> version uses `ByteData.sublistView(Uint8List.fromList(rawData))` which creates a copy.
 
 ## Development Commands
 

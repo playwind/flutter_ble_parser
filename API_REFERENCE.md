@@ -223,23 +223,74 @@ final List<int> customData;  // Returns 3 bytes as List<int>
 
 ## Generated Functions
 
-For each class annotated with `@BleObject()`, the builder generates a parsing function:
+For each class annotated with `@BleObject()`, the builder generates **two** parsing functions:
 
-### Function Signature
+### 1. Uint8List Version (Primary - Zero-Copy)
+
+**Function Signature:**
 
 ```dart
-ClassName _$ClassNameFromBytes(List<int> rawData)
+ClassName _$ClassNameFromBytes(Uint8List rawData)
 ```
 
 **Parameters:**
-- `rawData`: Raw byte array from BLE device
+- `rawData`: Raw byte array as `Uint8List` from BLE device
 
 **Returns:**
 - Parsed object of type `ClassName`
 
-**Example:**
+**Performance Characteristics:**
+- Zero-copy parsing using `ByteData.sublistView()`
+- Directly views the data without copying
+- Best for BLE devices that return `Uint8List`
+- No unnecessary memory allocation
 
-Given this class:
+**Example:**
+```dart
+HeartRatePacket _$HeartRatePacketFromBytes(Uint8List rawData) {
+  final view = ByteData.sublistView(rawData);
+  return HeartRatePacket(
+    flags: view.getUint8(0),
+    heartRate: view.getUint16(1, Endian.little)
+  );
+}
+```
+
+### 2. List<int> Version (Compatibility Wrapper)
+
+**Function Signature:**
+
+```dart
+ClassName _$ClassNameFromBytesList(List<int> rawData)
+```
+
+**Parameters:**
+- `rawData`: Raw byte array as `List<int>` from any source
+
+**Returns:**
+- Parsed object of type `ClassName`
+
+**Performance Characteristics:**
+- One-copy parsing using `Uint8List.fromList()`
+- Automatically converts `List<int>` to `Uint8List`
+- Works with any `List<int>` data source
+- Slightly more memory overhead due to conversion
+
+**Example:**
+```dart
+HeartRatePacket _$HeartRatePacketFromBytesList(List<int> rawData) {
+  final view = ByteData.sublistView(Uint8List.fromList(rawData));
+  return HeartRatePacket(
+    flags: view.getUint8(0),
+    heartRate: view.getUint16(1, Endian.little)
+  );
+}
+```
+
+### Usage Patterns
+
+**Recommended factory method implementation:**
+
 ```dart
 @BleObject()
 class HeartRatePacket {
@@ -248,19 +299,37 @@ class HeartRatePacket {
 
   @BleField(length: 2)
   final int heartRate;
+
+  HeartRatePacket({
+    required this.flags,
+    required this.heartRate,
+  });
+
+  // Convenience method - works with List<int>
+  static HeartRatePacket fromBytes(List<int> data) {
+    return _$HeartRatePacketFromBytesList(data);
+  }
+
+  // Optimized method - zero-copy parsing from Uint8List
+  static HeartRatePacket fromBytesUint8(Uint8List data) {
+    return _$HeartRatePacketFromBytes(data);
+  }
 }
 ```
 
-The generated function:
+**When to use each:**
+
 ```dart
-HeartRatePacket _$HeartRatePacketFromBytes(List<int> rawData) {
-  final view = ByteData.sublistView(Uint8List.fromList(rawData));
-  return HeartRatePacket(
-    flags: view.getUint8(0),
-    heartRate: view.getUint16(1, Endian.little)
-  );
-}
+// Using Uint8List (recommended for BLE data)
+final bleData = Uint8List.fromList([0x06, 0x78, 0x00]);
+final packet1 = HeartRatePacket.fromBytesUint8(bleData);  // Zero-copy
+
+// Using List<int> (convenience)
+final listData = [0x06, 0x78, 0x00];
+final packet2 = HeartRatePacket.fromBytes(listData);  // Auto-conversion
 ```
+
+**Note:** Both methods produce identical parsing results. The choice depends on your data source and performance requirements.
 
 ---
 

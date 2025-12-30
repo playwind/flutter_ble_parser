@@ -30,16 +30,10 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
     final defaultEndian = _readDefaultEndian(annotation);
     final defaultSigned = _readDefaultSigned(annotation);
 
-    final buffer = StringBuffer();
-
-    // Generate private parsing function: _$ClassNameFromBytes
-    buffer.writeln('$className _\$${className}FromBytes(List<int> rawData) {');
-    buffer.writeln(
-      '  final view = ByteData.sublistView(Uint8List.fromList(rawData));',
-    );
-
+    // Collect field information first
     int autoOffset = 0;
-    List<String> constructorArgs = [];
+    List<String> constructorArgsUint8 = [];
+    List<String> constructorArgsList = [];
 
     // Iterate through all fields
     for (var field in element.fields) {
@@ -52,20 +46,34 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
       // 1. Determine offset
       int currentOffset = fieldAnn.offset ?? autoOffset;
 
-      // 2. Generate read expression
-      String readExpr = _genReadExpr(fieldAnn, currentOffset);
+      // 2. Generate read expressions for both Uint8List and List<int> versions
+      String readExprUint8 = _genReadExpr(fieldAnn, currentOffset, true);
+      String readExprList = _genReadExpr(fieldAnn, currentOffset, false);
 
-      // 3. Store constructor arguments
-      constructorArgs.add('${field.name}: $readExpr');
+      // 3. Store constructor arguments separately for each version
+      constructorArgsUint8.add('${field.name}: $readExprUint8');
+      constructorArgsList.add('${field.name}: $readExprList');
 
       // 4. Update auto offset
       autoOffset = currentOffset + fieldAnn.length;
     }
 
-    // Generate return statement
-    buffer.writeln('  return $className(');
-    buffer.writeln(constructorArgs.join(',\n'));
-    buffer.writeln('  );');
+    final constructorBody = '  return $className(\n${constructorArgsUint8.join(',\n')}\n  );';
+    final constructorBodyList = '  return $className(\n${constructorArgsList.join(',\n')}\n  );';
+
+    final buffer = StringBuffer();
+
+    // Generate Uint8List version (primary method, keeps original name)
+    buffer.writeln('$className _\$${className}FromBytes(Uint8List rawData) {');
+    buffer.writeln('  final view = ByteData.sublistView(rawData);');
+    buffer.write(constructorBody);
+    buffer.writeln('}');
+    buffer.writeln('');
+
+    // Generate List<int> version (additional method for compatibility)
+    buffer.writeln('$className _\$${className}FromBytesList(List<int> rawData) {');
+    buffer.writeln('  final view = ByteData.sublistView(Uint8List.fromList(rawData));');
+    buffer.write(constructorBodyList);
     buffer.writeln('}');
 
     return buffer.toString();
@@ -172,14 +180,21 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
   }
 
   // Generate ByteData read expression based on length and signed
-  String _genReadExpr(_BleFieldData data, int offset) {
+  String _genReadExpr(_BleFieldData data, int offset, bool isUint8List) {
     final endian = data.endian == 'Endian.little'
         ? 'Endian.little'
         : 'Endian.big';
 
     // Handle nested object
     if (data.objectType != null) {
-      return '_\$${data.objectType}FromBytes(rawData.sublist($offset, ${offset + data.length}))';
+      final methodName = isUint8List
+          ? '_\$${data.objectType}FromBytes'
+          : '_\$${data.objectType}FromBytesList';
+      if (isUint8List) {
+        return '$methodName(rawData.sublist($offset, ${offset + data.length}))';
+      } else {
+        return '$methodName(rawData.sublist($offset, ${offset + data.length}))';
+      }
     }
 
     // Handle integer types based on length

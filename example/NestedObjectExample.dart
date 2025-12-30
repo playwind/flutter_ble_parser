@@ -16,6 +16,10 @@ class SensorData {
   SensorData({required this.temperature, required this.humidity});
 
   static SensorData fromBytes(List<int> data) {
+    return _$SensorDataFromBytesList(data);
+  }
+
+  static SensorData fromBytesUint8(Uint8List data) {
     return _$SensorDataFromBytes(data);
   }
 }
@@ -40,6 +44,10 @@ class DevicePacket {
   });
 
   static DevicePacket fromBytes(List<int> data) {
+    return _$DevicePacketFromBytesList(data);
+  }
+
+  static DevicePacket fromBytesUint8(Uint8List data) {
     return _$DevicePacketFromBytes(data);
   }
 }
@@ -63,6 +71,10 @@ class SignedSensorData {
   });
 
   static SignedSensorData fromBytes(List<int> data) {
+    return _$SignedSensorDataFromBytesList(data);
+  }
+
+  static SignedSensorData fromBytesUint8(Uint8List data) {
     return _$SignedSensorDataFromBytes(data);
   }
 }

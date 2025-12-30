@@ -23,7 +23,12 @@ class HeartRatePacket {
   });
 
   // Convenient factory method - Parse from byte array
-  static HeartRatePacket fromBytes(List<int> data) {
+  factory HeartRatePacket.fromBytes(List<int> data) {
+    return _$HeartRatePacketFromBytesList(data);
+  }
+
+  // Parse from Uint8List (zero-copy, preferred for BLE data)
+  factory HeartRatePacket.fromBytesUint8(Uint8List data) {
     return _$HeartRatePacketFromBytes(data);
   }
 }
