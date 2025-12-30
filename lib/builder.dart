@@ -19,8 +19,9 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
     ConstantReader annotation,
     BuildStep buildStep,
   ) {
-    if (element is! ClassElement)
+    if (element is! ClassElement) {
       throw '@BleObject can only be used on classes';
+    }
 
     final className = element.name;
     print('Generating parser for class: $className');

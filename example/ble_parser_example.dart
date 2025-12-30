@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:ble_parser/ble_parser.dart';
 import 'HeartRatePacket.dart';
 
 void main() {

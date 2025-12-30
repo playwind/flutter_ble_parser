@@ -1,4 +1,3 @@
-import 'package:ble_parser/ble_parser.dart';
 import 'package:test/test.dart';
 
 void main() {
