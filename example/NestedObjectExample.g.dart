@@ -19,6 +19,14 @@ DevicePacket _$DevicePacketFromBytes(List<int> rawData) {
   final view = ByteData.sublistView(Uint8List.fromList(rawData));
   return DevicePacket(
       deviceId: view.getUint8(0),
-      sensorData: _$SensorDataFromBytes(rawData.sublist(1)),
+      sensorData: _$SensorDataFromBytes(rawData.sublist(1, 5)),
       timestamp: view.getUint32(5, Endian.little));
+}
+
+SignedSensorData _$SignedSensorDataFromBytes(List<int> rawData) {
+  final view = ByteData.sublistView(Uint8List.fromList(rawData));
+  return SignedSensorData(
+      temperature: view.getInt16(0, Endian.little),
+      pressure: view.getInt16(2, Endian.little),
+      timestamp: view.getUint32(4, Endian.little));
 }

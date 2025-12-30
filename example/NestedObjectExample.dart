@@ -4,13 +4,13 @@ import 'package:ble_parser/ble_parser.dart';
 
 part 'NestedObjectExample.g.dart';
 
-// 嵌套对象：传感器数据
-@BleObject()
+// Nested object: sensor data with default little endian
+@BleObject(endian: Endian.little)
 class SensorData {
-  @BleField(type: BleType.uint16, endian: Endian.little)
+  @BleField(length: 2)  // Uses default endian from BleObject
   final int temperature;
 
-  @BleField(type: BleType.uint16, endian: Endian.little)
+  @BleField(length: 2)  // Uses default endian from BleObject
   final int humidity;
 
   SensorData({
@@ -23,17 +23,17 @@ class SensorData {
   }
 }
 
-// 外层对象：设备数据包，包含嵌套的传感器数据（使用自动推断）
-@BleObject()
+// Outer object: device packet containing nested sensor data
+@BleObject(endian: Endian.little)
 class DevicePacket {
-  @BleField(type: BleType.uint8)
+  @BleField(length: 1)
   final int deviceId;
 
-  // 注意：这里没有指定 objectType，将自动推断为 SensorData
-  @BleField(type: BleType.object)
+  // Nested object - must specify length and objectType
+  @BleField(length: 4, objectType: SensorData)
   final SensorData sensorData;
 
-  @BleField(type: BleType.uint32, endian: Endian.little)
+  @BleField(length: 4)  // Uses default endian from BleObject
   final int timestamp;
 
   DevicePacket({
@@ -44,5 +44,28 @@ class DevicePacket {
 
   static DevicePacket fromBytes(List<int> data) {
     return _$DevicePacketFromBytes(data);
+  }
+}
+
+// Example demonstrating default signed values
+@BleObject(endian: Endian.little, signed: true)
+class SignedSensorData {
+  @BleField(length: 2)  // Uses default: little endian + signed
+  final int temperature;  // Can be negative
+
+  @BleField(length: 2)  // Uses default: little endian + signed
+  final int pressure;    // Can be negative
+
+  @BleField(length: 4, signed: false)  // Override: unsigned
+  final int timestamp;
+
+  SignedSensorData({
+    required this.temperature,
+    required this.pressure,
+    required this.timestamp,
+  });
+
+  static SignedSensorData fromBytes(List<int> data) {
+    return _$SignedSensorDataFromBytes(data);
   }
 }

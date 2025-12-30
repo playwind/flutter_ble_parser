@@ -4,25 +4,25 @@ import 'package:ble_parser/ble_parser.dart';
 
 part 'HeartRatePacket.g.dart';
 
-@BleObject()
+@BleObject(endian: Endian.little)
 class HeartRatePacket {
-  @BleField(type: BleType.uint8)
+  @BleField(length: 1)
   final int flags;
 
-  @BleField(type: BleType.uint16, endian: Endian.little)
+  @BleField(length: 2)  // Uses default endian from BleObject
   final int heartRateValue;
 
-  @BleField(type: BleType.uint16, offset: 4) // 跳过一个字节，直接读offset 4
+  @BleField(length: 2, offset: 4)  // Skip to offset 4, uses default endian
   final int energyExpended;
 
-  // 构造函数
+  // Constructor
   HeartRatePacket({
     required this.flags,
     required this.heartRateValue,
     required this.energyExpended
   });
 
-  // 便捷工厂方法 - 从字节数组解析
+  // Convenient factory method - Parse from byte array
   static HeartRatePacket fromBytes(List<int> data) {
     return _$HeartRatePacketFromBytes(data);
   }
