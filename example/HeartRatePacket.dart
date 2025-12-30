@@ -9,17 +9,17 @@ class HeartRatePacket {
   @BleField(length: 1)
   final int flags;
 
-  @BleField(length: 2)  // Uses default endian from BleObject
+  @BleField(length: 2) // Uses default endian from BleObject
   final int heartRateValue;
 
-  @BleField(length: 2, offset: 4)  // Skip to offset 4, uses default endian
+  @BleField(length: 2, offset: 4) // Skip to offset 4, uses default endian
   final int energyExpended;
 
   // Constructor
   HeartRatePacket({
     required this.flags,
     required this.heartRateValue,
-    required this.energyExpended
+    required this.energyExpended,
   });
 
   // Convenient factory method - Parse from byte array

@@ -9,12 +9,18 @@ import 'package:source_gen/source_gen.dart';
 import 'src/annotations.dart';
 
 // Entry point
-Builder bleParserBuilder(BuilderOptions options) => SharedPartBuilder([BleParserGenerator()], 'ble_parser');
+Builder bleParserBuilder(BuilderOptions options) =>
+    SharedPartBuilder([BleParserGenerator()], 'ble_parser');
 
 class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
   @override
-  String generateForAnnotatedElement(Element element, ConstantReader annotation, BuildStep buildStep) {
-    if (element is! ClassElement) throw '@BleObject can only be used on classes';
+  String generateForAnnotatedElement(
+    Element element,
+    ConstantReader annotation,
+    BuildStep buildStep,
+  ) {
+    if (element is! ClassElement)
+      throw '@BleObject can only be used on classes';
 
     final className = element.name;
     print('Generating parser for class: $className');
@@ -27,7 +33,9 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
 
     // Generate private parsing function: _$ClassNameFromBytes
     buffer.writeln('$className _\$${className}FromBytes(List<int> rawData) {');
-    buffer.writeln('  final view = ByteData.sublistView(Uint8List.fromList(rawData));');
+    buffer.writeln(
+      '  final view = ByteData.sublistView(Uint8List.fromList(rawData));',
+    );
 
     int autoOffset = 0;
     List<String> constructorArgs = [];
@@ -70,7 +78,9 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
     final endianReader = annotation.read('endian');
     final endianObj = endianReader.objectValue;
     final endianStr = endianObj.toString();
-    final littleEndianMatch = RegExp(r"littleEndian = bool \((true|false)\)").firstMatch(endianStr);
+    final littleEndianMatch = RegExp(
+      r"littleEndian = bool \((true|false)\)",
+    ).firstMatch(endianStr);
     if (littleEndianMatch != null && littleEndianMatch.group(1) == 'true') {
       return 'Endian.little';
     } else {
@@ -87,10 +97,16 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
   }
 
   // Helper method to get annotation data with defaults applied
-  _BleFieldData? _getAnnotation(FieldElement field, String defaultEndian, bool defaultSigned) {
+  _BleFieldData? _getAnnotation(
+    FieldElement field,
+    String defaultEndian,
+    bool defaultSigned,
+  ) {
     for (var metadata in field.metadata) {
       final annotation = metadata.computeConstantValue();
-      final annotationType = annotation?.type?.getDisplayString(withNullability: false);
+      final annotationType = annotation?.type?.getDisplayString(
+        withNullability: false,
+      );
 
       if (annotationType == 'BleField') {
         final typeChecker = TypeChecker.fromRuntime(BleField);
@@ -116,8 +132,11 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
             final endianReader = reader.read('endian');
             final endianObj = endianReader.objectValue;
             final endianStr = endianObj.toString();
-            final littleEndianMatch = RegExp(r"littleEndian = bool \((true|false)\)").firstMatch(endianStr);
-            if (littleEndianMatch != null && littleEndianMatch.group(1) == 'true') {
+            final littleEndianMatch = RegExp(
+              r"littleEndian = bool \((true|false)\)",
+            ).firstMatch(endianStr);
+            if (littleEndianMatch != null &&
+                littleEndianMatch.group(1) == 'true') {
               endian = 'Endian.little';
             } else {
               endian = 'Endian.big';
@@ -136,7 +155,9 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
             final objectTypeReader = reader.read('objectType');
             final objectTypeObj = objectTypeReader.objectValue;
             final objectTypeStr = objectTypeObj.toString();
-            final typeMatch = RegExp(r"Type \(([^)]+)\)").firstMatch(objectTypeStr);
+            final typeMatch = RegExp(
+              r"Type \(([^)]+)\)",
+            ).firstMatch(objectTypeStr);
             if (typeMatch != null) {
               objectType = typeMatch.group(1);
             }
@@ -151,7 +172,9 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
 
   // Generate ByteData read expression based on length and signed
   String _genReadExpr(_BleFieldData data, int offset) {
-    final endian = data.endian == 'Endian.little' ? 'Endian.little' : 'Endian.big';
+    final endian = data.endian == 'Endian.little'
+        ? 'Endian.little'
+        : 'Endian.big';
 
     // Handle nested object
     if (data.objectType != null) {
@@ -191,5 +214,11 @@ class _BleFieldData {
   bool signed;
   String? objectType;
 
-  _BleFieldData(this.length, this.offset, this.endian, this.signed, [this.objectType]);
+  _BleFieldData(
+    this.length,
+    this.offset,
+    this.endian,
+    this.signed, [
+    this.objectType,
+  ]);
 }

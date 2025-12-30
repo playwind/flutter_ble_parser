@@ -12,9 +12,9 @@ void main() {
   // timestamp: 0x11223344 (4 bytes, little endian) = 287454020
 
   final List<int> testData = [
-    0x01,                    // deviceId = 1
-    0x34, 0x12,             // temperature = 4660 (little endian)
-    0x78, 0x56,             // humidity = 22136 (little endian)
+    0x01, // deviceId = 1
+    0x34, 0x12, // temperature = 4660 (little endian)
+    0x78, 0x56, // humidity = 22136 (little endian)
     0x44, 0x33, 0x22, 0x11, // timestamp = 287454020 (little endian)
   ];
 
@@ -45,9 +45,9 @@ void main() {
   // pressure: -50 (0xCE 0xFF as int16 little endian)
   // timestamp: 1234567890 (0xD2 0x02 0x96 0x49 as uint32 little endian)
   final signedData = [
-    0xF6, 0xFF,      // temperature = -10
-    0xCE, 0xFF,      // pressure = -50
-    0xD2, 0x02, 0x96, 0x49,  // timestamp = 1234567890
+    0xF6, 0xFF, // temperature = -10
+    0xCE, 0xFF, // pressure = -50
+    0xD2, 0x02, 0x96, 0x49, // timestamp = 1234567890
   ];
 
   final signed = SignedSensorData.fromBytes(signedData);

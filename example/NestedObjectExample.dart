@@ -7,16 +7,13 @@ part 'NestedObjectExample.g.dart';
 // Nested object: sensor data with default little endian
 @BleObject(endian: Endian.little)
 class SensorData {
-  @BleField(length: 2)  // Uses default endian from BleObject
+  @BleField(length: 2) // Uses default endian from BleObject
   final int temperature;
 
-  @BleField(length: 2)  // Uses default endian from BleObject
+  @BleField(length: 2) // Uses default endian from BleObject
   final int humidity;
 
-  SensorData({
-    required this.temperature,
-    required this.humidity,
-  });
+  SensorData({required this.temperature, required this.humidity});
 
   static SensorData fromBytes(List<int> data) {
     return _$SensorDataFromBytes(data);
@@ -33,7 +30,7 @@ class DevicePacket {
   @BleField(length: 4, objectType: SensorData)
   final SensorData sensorData;
 
-  @BleField(length: 4)  // Uses default endian from BleObject
+  @BleField(length: 4) // Uses default endian from BleObject
   final int timestamp;
 
   DevicePacket({
@@ -50,13 +47,13 @@ class DevicePacket {
 // Example demonstrating default signed values
 @BleObject(endian: Endian.little, signed: true)
 class SignedSensorData {
-  @BleField(length: 2)  // Uses default: little endian + signed
-  final int temperature;  // Can be negative
+  @BleField(length: 2) // Uses default: little endian + signed
+  final int temperature; // Can be negative
 
-  @BleField(length: 2)  // Uses default: little endian + signed
-  final int pressure;    // Can be negative
+  @BleField(length: 2) // Uses default: little endian + signed
+  final int pressure; // Can be negative
 
-  @BleField(length: 4, signed: false)  // Override: unsigned
+  @BleField(length: 4, signed: false) // Override: unsigned
   final int timestamp;
 
   SignedSensorData({
