@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dart run:*)"
+      "Bash(dart run:*)",
+      "mcp__web-reader__webReader",
+      "Bash(dart test:*)"
     ],
     "deny": [],
     "ask": []

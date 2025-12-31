@@ -65,11 +65,27 @@ Marks a field for BLE data parsing. Used on class fields.
 
 **Supported Lengths:**
 
-- `1` byte → `int8`/`uint8`
-- `2` bytes → `int16`/`uint16`
-- `4` bytes → `int32`/`uint32`
-- `8` bytes → `int64`/`uint64`
-- Other values → Returns `List<int>` (raw bytes)
+| Field Type | Length | Generated Method | Description |
+|------------|--------|-----------------|-------------|
+| `int` | 1 | `getUint8()` / `getInt8()` | 8-bit integer |
+| `int` | 2 | `getUint16()` / `getInt16()` | 16-bit integer |
+| `int` | 4 | `getUint32()` / `getInt32()` | 32-bit integer |
+| `int` | 8 | `getUint64()` / `getInt64()` | 64-bit integer |
+| `double` | 4 | `getFloat32()` | IEEE 754 single precision |
+| `double` | 8 | `getFloat64()` | IEEE 754 double precision |
+| `String` | Any | `String.fromCharCodes()` | ASCII/Latin-1 string |
+| Other | Any | `sublist()` | Raw bytes as `List<int>` |
+
+**Type Inference:**
+
+The library automatically infers the parsing method based on the field's Dart type. Just use the natural Dart type (`int`, `double`, `String`) and the generator handles the rest.
+
+**String Type Support:**
+
+- Uses `String.fromCharCodes()` - **no imports required!**
+- Supports ASCII and Latin-1 characters (0-255)
+- Perfect for BLE protocols (device names, UUIDs, commands)
+- Note: Does NOT support UTF-8 multibyte characters (Chinese, emoji, etc.)
 
 ## Quick Start
 

@@ -172,14 +172,21 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
             }
           }
 
-          return _BleFieldData(length, offset, endian, signed, objectType);
+          // Infer field type from the field's type
+          String? fieldType;
+          final fieldTypeStr = field.type.getDisplayString(withNullability: false);
+          if (fieldTypeStr == 'int' || fieldTypeStr == 'double' || fieldTypeStr == 'String') {
+            fieldType = fieldTypeStr;
+          }
+
+          return _BleFieldData(length, offset, endian, signed, objectType, fieldType);
         }
       }
     }
     return null;
   }
 
-  // Generate ByteData read expression based on length and signed
+  // Generate ByteData read expression based on length and type
   String _genReadExpr(_BleFieldData data, int offset, bool isUint8List) {
     final endian = data.endian == 'Endian.little'
         ? 'Endian.little'
@@ -194,6 +201,22 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
         return '$methodName(rawData.sublist($offset, ${offset + data.length}))';
       } else {
         return '$methodName(rawData.sublist($offset, ${offset + data.length}))';
+      }
+    }
+
+    // Handle String type (using String.fromCharCodes - no import needed)
+    if (data.fieldType == 'String') {
+      return 'String.fromCharCodes(rawData.sublist($offset, ${offset + data.length}))';
+    }
+
+    // Handle double type (float32/float64)
+    if (data.fieldType == 'double') {
+      if (data.length == 4) {
+        return 'view.getFloat32($offset, $endian)';
+      } else if (data.length == 8) {
+        return 'view.getFloat64($offset, $endian)';
+      } else {
+        throw 'Double type must be 4 or 8 bytes, got ${data.length}';
       }
     }
 
@@ -229,6 +252,7 @@ class _BleFieldData {
   String endian;
   bool signed;
   String? objectType;
+  String? fieldType; // 'int', 'double', 'String', or null for auto
 
   _BleFieldData(
     this.length,
@@ -236,5 +260,6 @@ class _BleFieldData {
     this.endian,
     this.signed, [
     this.objectType,
+    this.fieldType,
   ]);
 }

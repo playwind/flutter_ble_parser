@@ -1,6 +1,6 @@
 name: ble_parser
 description: A Dart/Flutter code generation library for parsing Bluetooth Low Energy (BLE) byte data into typed objects.
-version: 1.0.0
+version: 1.1.0
 homepage: https://github.com/playwind/flutter_ble_parser
 repository: https://github.com/playwind/flutter_ble_parser
 issue_tracker: https://github.com/playwind/flutter_ble_parser/issues

@@ -199,6 +199,10 @@ class OuterData {
 
 ## Data Types
 
+### Type Inference
+
+The library automatically infers the parsing method based on the field's Dart type. No manual type specification needed - just use the natural Dart type.
+
 ### Integer Types
 
 Based on the `length` and `signed` parameters, different integer types are generated:
@@ -210,9 +214,62 @@ Based on the `length` and `signed` parameters, different integer types are gener
 | 4 bytes | `uint32` | `int32` | -2¹⁰ to 2³¹-1 / 0 to 2²²-1 |
 | 8 bytes | `uint64` | `int64` | -2²³ to 2²³-1 / 0 to 2²⁴-1 |
 
+**Example:**
+```dart
+@BleField(length: 4)
+final int value;  // → view.getUint32() or view.getInt32()
+```
+
+### Floating Point Types
+
+For `double` type fields, IEEE 754 floating point parsing is used:
+
+| Length | Type | Method | Range |
+|--------|------|--------|-------|
+| 4 bytes | Float32 | `getFloat32()` | ~1.2×10⁻³⁸ to ~3.4×10³⁸ |
+| 8 bytes | Float64 | `getFloat64()` | ~5.0×10⁻³²⁴ to ~1.8×10³⁰⁸ |
+
+**Example:**
+```dart
+@BleField(length: 4)
+final double temperature;  // → view.getFloat32(offset, endian)
+
+@BleField(length: 8)
+final double pressure;  // → view.getFloat64(offset, endian)
+```
+
+### String Type
+
+For `String` type fields, character decoding is performed:
+
+| Method | Character Support | Imports Required |
+|--------|------------------|-------------------|
+| `String.fromCharCodes()` | ASCII/Latin-1 (0-255) | **None** ✅ |
+| (Future option) `utf8.decode()` | Full UTF-8 (Unicode) | `dart:convert` |
+
+**Current Implementation:**
+```dart
+@BleField(length: 10)
+final String deviceName;  // → String.fromCharCodes(bytes)
+```
+
+**Character Support:**
+- ✅ ASCII characters (0-127)
+- ✅ Latin-1 characters (128-255)
+- ❌ UTF-8 multibyte characters (Chinese, emoji, etc.)
+
+**For BLE Protocols:**
+Perfect for standard BLE use cases:
+- Device names (ASCII)
+- UUID strings (ASCII/hex)
+- Protocol commands (ASCII)
+- Serial numbers (ASCII/Latin-1)
+
+**Note:** If you need full UTF-8 support (Chinese characters, emoji, etc.), you would need to use `dart:convert` and `utf8.decode()`, which requires adding `import 'dart:convert' show utf8;` to your model file.
+
 ### Raw Bytes
 
-When `length` is not 1, 2, 4, or 8, the field returns `List<int>`:
+When `length` is not 1, 2, 4, or 8 (or for types without special handling), the field returns `List<int>`:
 
 ```dart
 @BleField(length: 3)
