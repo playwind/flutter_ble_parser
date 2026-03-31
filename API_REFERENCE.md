@@ -77,6 +77,7 @@ const BleField({
   Endian? endian,
   bool? signed,
   Type? objectType,
+  bool optional = false,
 })
 ```
 
@@ -192,6 +193,58 @@ class OuterData {
 
   @BleField(length: 4, objectType: InnerData)  // Must specify type and correct length
   final InnerData nested;
+}
+```
+
+#### `optional` (optional)
+- **Type:** `bool`
+- **Default:** `false`
+- **Description:** When `true`, the field is treated as optional. If the raw data is too short to contain this field, it will be set to `null` instead of throwing a `RangeError`. The field's Dart type must be nullable (e.g., `int?` instead of `int`). Typically used for trailing fields in BLE packets where data length may vary.
+
+**Important:**
+- Optional fields should be placed after all required fields
+- The Dart field type **must** be nullable (build will fail with a descriptive error if not)
+- Offset tracking continues regardless of whether data is present, preserving the protocol layout
+
+**Examples:**
+```dart
+@BleObject(endian: Endian.little)
+class HeartRatePacket {
+  @BleField(length: 1)
+  final int flags;  // Required
+
+  @BleField(length: 2)
+  final int heartRateValue;  // Required
+
+  @BleField(length: 2, offset: 4, optional: true)
+  final int? energyExpended;  // Optional - null if data too short
+
+  @BleField(length: 2, optional: true)
+  final int? rrInterval;  // Optional - null if data too short
+
+  HeartRatePacket({
+    required this.flags,
+    required this.heartRateValue,
+    this.energyExpended,
+    this.rrInterval,
+  });
+}
+```
+
+**Generated code:**
+```dart
+HeartRatePacket _$HeartRatePacketFromBytes(Uint8List rawData) {
+  final view = ByteData.sublistView(rawData);
+  return HeartRatePacket(
+    flags: view.getUint8(0),
+    heartRateValue: view.getUint16(1, Endian.little),
+    energyExpended: rawData.length >= 6
+        ? view.getUint16(4, Endian.little)
+        : null,
+    rrInterval: rawData.length >= 8
+        ? view.getUint16(6, Endian.little)
+        : null,
+  );
 }
 ```
 

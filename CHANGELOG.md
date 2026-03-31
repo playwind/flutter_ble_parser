@@ -1,3 +1,15 @@
+## 1.2.0
+
+### Features
+- **Optional Fields**: Support optional fields via `@BleField(optional: true)`
+  - Fields marked as `optional` return `null` when data is too short
+  - Build-time validation ensures optional fields have nullable Dart types
+  - Ideal for BLE packets with variable-length trailing data
+
+### Testing
+- Added test suite for optional fields (5 tests)
+- All 15 tests passing
+
 ## 1.1.0
 
 ### Features

@@ -62,6 +62,7 @@ Marks a field for BLE data parsing. Used on class fields.
 | `endian` | `Endian?` | No | `null` | Byte order (null = use default from @BleObject) |
 | `signed` | `bool?` | No | `null` | Whether integer is signed (null = use default from @BleObject) |
 | `objectType` | `Type?` | No | `null` | Nested object type (required for nested objects) |
+| `optional` | `bool` | No | `false` | Whether field is optional (returns null if data too short) |
 
 **Supported Lengths:**
 
@@ -104,13 +105,13 @@ class HeartRatePacket {
   @BleField(length: 2)
   final int heartRateValue;
 
-  @BleField(length: 2, offset: 4)  // Skip to byte 4
-  final int energyExpended;
+  @BleField(length: 2, offset: 4, optional: true)  // Optional trailing field
+  final int? energyExpended;
 
   HeartRatePacket({
     required this.flags,
     required this.heartRateValue,
-    required this.energyExpended,
+    this.energyExpended,
   });
 
   // Parse from List<int> (convenience method)
@@ -363,6 +364,41 @@ class CustomData {
 }
 ```
 
+### Example 7: Optional Fields
+
+For BLE packets with variable-length trailing data, use `optional: true`:
+
+```dart
+@BleObject(endian: Endian.little)
+class HeartRateMeasurement {
+  @BleField(length: 1)
+  final int flags;
+
+  @BleField(length: 2)
+  final int heartRate;
+
+  // These trailing fields may not be present in all packets
+  @BleField(length: 2, optional: true)
+  final int? energyExpended;
+
+  @BleField(length: 2, optional: true)
+  final int? rrInterval;
+
+  HeartRateMeasurement({
+    required this.flags,
+    required this.heartRate,
+    this.energyExpended,
+    this.rrInterval,
+  });
+
+  static HeartRateMeasurement fromBytes(List<int> data) {
+    return _$HeartRateMeasurementFromBytesList(data);
+  }
+}
+```
+
+**Note:** Optional fields must have nullable Dart types (`int?` not `int`). When data is too short, they return `null` instead of throwing.
+
 ## Generated Code
 
 The builder generates two parsing functions for each annotated class:
@@ -374,7 +410,9 @@ HeartRatePacket _$HeartRatePacketFromBytes(Uint8List rawData) {
   return HeartRatePacket(
     flags: view.getUint8(0),
     heartRateValue: view.getUint16(1, Endian.little),
-    energyExpended: view.getUint16(4, Endian.little)
+    energyExpended: rawData.length >= 6
+        ? view.getUint16(4, Endian.little)
+        : null
   );
 }
 ```
@@ -386,7 +424,9 @@ HeartRatePacket _$HeartRatePacketFromBytesList(List<int> rawData) {
   return HeartRatePacket(
     flags: view.getUint8(0),
     heartRateValue: view.getUint16(1, Endian.little),
-    energyExpended: view.getUint16(4, Endian.little)
+    energyExpended: rawData.length >= 6
+        ? view.getUint16(4, Endian.little)
+        : null
   );
 }
 ```

@@ -8,6 +8,7 @@ targets:
       ble_parser:
         generate_for:
           - example/*.dart
+          - test/*.dart
         options: { }
 
 builders:

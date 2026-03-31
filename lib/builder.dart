@@ -51,8 +51,14 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
       String readExprList = _genReadExpr(fieldAnn, currentOffset, false);
 
       // 3. Store constructor arguments separately for each version
-      constructorArgsUint8.add('${field.name}: $readExprUint8');
-      constructorArgsList.add('${field.name}: $readExprList');
+      if (fieldAnn.optional) {
+        final endOffset = currentOffset + fieldAnn.length;
+        constructorArgsUint8.add('${field.name}: rawData.length >= $endOffset ? $readExprUint8 : null');
+        constructorArgsList.add('${field.name}: rawData.length >= $endOffset ? $readExprList : null');
+      } else {
+        constructorArgsUint8.add('${field.name}: $readExprUint8');
+        constructorArgsList.add('${field.name}: $readExprList');
+      }
 
       // 4. Update auto offset
       autoOffset = currentOffset + fieldAnn.length;
@@ -172,6 +178,20 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
             }
           }
 
+          // Read optional parameter (defaults to false)
+          bool optional = false;
+          if (!reader.read('optional').isNull) {
+            optional = reader.read('optional').boolValue;
+          }
+
+          // Validate: optional fields must have nullable Dart type
+          if (optional) {
+            final nullableType = field.type.getDisplayString(withNullability: true);
+            if (!nullableType.endsWith('?')) {
+              throw 'Field \'${field.name}\' is marked @BleField(optional: true) but its type \'$nullableType\' is not nullable. Use \'$nullableType?\' instead.';
+            }
+          }
+
           // Infer field type from the field's type
           String? fieldType;
           final fieldTypeStr = field.type.getDisplayString(withNullability: false);
@@ -179,7 +199,7 @@ class BleParserGenerator extends GeneratorForAnnotation<BleObject> {
             fieldType = fieldTypeStr;
           }
 
-          return _BleFieldData(length, offset, endian, signed, objectType, fieldType);
+          return _BleFieldData(length, offset, endian, signed, objectType, fieldType, optional);
         }
       }
     }
@@ -253,6 +273,7 @@ class _BleFieldData {
   bool signed;
   String? objectType;
   String? fieldType; // 'int', 'double', 'String', or null for auto
+  bool optional;
 
   _BleFieldData(
     this.length,
@@ -261,5 +282,6 @@ class _BleFieldData {
     this.signed, [
     this.objectType,
     this.fieldType,
+    this.optional = false,
   ]);
 }

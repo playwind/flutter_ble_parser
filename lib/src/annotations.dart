@@ -20,6 +20,7 @@ class BleField {
   final bool?
   signed; // Whether the integer is signed (null = use default from BleObject)
   final Type? objectType; // Nested object type (optional)
+  final bool optional; // Whether the field is optional (returns null if data too short)
 
   const BleField({
     required this.length,
@@ -27,5 +28,6 @@ class BleField {
     this.endian,
     this.signed,
     this.objectType,
+    this.optional = false,
   });
 }

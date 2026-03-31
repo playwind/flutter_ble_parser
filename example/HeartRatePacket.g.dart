@@ -13,7 +13,8 @@ HeartRatePacket _$HeartRatePacketFromBytes(Uint8List rawData) {
   return HeartRatePacket(
       flags: view.getUint8(0),
       heartRateValue: view.getUint16(1, Endian.little),
-      energyExpended: view.getUint16(4, Endian.little));
+      energyExpended:
+          rawData.length >= 6 ? view.getUint16(4, Endian.little) : null);
 }
 
 HeartRatePacket _$HeartRatePacketFromBytesList(List<int> rawData) {
@@ -21,5 +22,6 @@ HeartRatePacket _$HeartRatePacketFromBytesList(List<int> rawData) {
   return HeartRatePacket(
       flags: view.getUint8(0),
       heartRateValue: view.getUint16(1, Endian.little),
-      energyExpended: view.getUint16(4, Endian.little));
+      energyExpended:
+          rawData.length >= 6 ? view.getUint16(4, Endian.little) : null);
 }
